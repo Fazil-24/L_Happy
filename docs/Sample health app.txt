@@ -1,0 +1,22 @@
+Sample: health app
+Feature Name *
+Daily Recovery Score
+Description *
+Daily Recovery Score is a personalized wellness feature inside a health and fitness app. It combines sleep duration, sleep consistency, resting heart rate, recent activity load, and self-reported energy or soreness to generate a daily readiness score each morning. Based on that score, the app recommends whether the user should train hard, do light activity, focus on recovery, or rest. The feature is designed to make health data easier to act on by turning multiple signals into one simple recommendation, while still showing the underlying factors that influenced the score so users do not feel the result is a black box.
+Target Users *
+Primary users are health-conscious adults, fitness beginners, and regular exercisers who want simple daily guidance instead of interpreting multiple charts on their own. Secondary users are people returning to exercise after burnout, inconsistent sleep, or overtraining, as well as users who already track sleep and workouts but struggle to decide how hard to push each day.
+Value Proposition
+Know how hard to push today. Daily Recovery Score helps users turn scattered health signals into one clear action, so they can train smarter, recover better, and avoid overdoing it when their body is under stress.
+Launch Goal
+Success means users check the score regularly, understand why it changes, and adjust their behavior based on the recommendation. In the first phase, the goal is to increase weekly engagement, morning app opens, and repeat use of sleep and recovery-related features, while also seeing that users trust the score enough to follow its guidance rather than dismissing it as random.
+Timeline
+8 weeks of runway.
+•	Weeks 1–2: internal testing and quality calibration.
+•	Weeks 3–4: beta with existing premium users who already log sleep and workouts.
+•	Weeks 5–6: improve explanation screens, recommendation language, and confidence indicators.
+•	Weeks 7–8: phased public rollout with onboarding education and privacy messaging.
+Competitors / Alternatives
+Users today may rely on raw sleep graphs, workout history, smartwatch recovery metrics, general fitness advice, or their own intuition about whether they feel ready. The closest alternatives are wearable or fitness apps that surface readiness, sleep, strain, or recovery signals, but many users still piece together these signals manually rather than getting one trusted recommendation inside a single health app.
+Known Concerns
+The biggest concern is trust and misinterpretation. If the score feels inconsistent, too generic, or medically overconfident, users may either ignore it or treat it too seriously. Privacy is another major concern, because health apps often handle sensitive personal data and users may worry about how sleep, activity, and wellness information is stored or shared. There is also a messaging risk: the feature should feel like wellness guidance, not medical advice, and it should explain uncertainty clearly so users understand that the score is directional support rather than a diagnosis.
+
