@@ -23,6 +23,8 @@ const PROACTIVE_SUGGESTIONS = [
   "How can I improve sentiment?",
 ];
 
+const PENDO_AGENT_ID = "1yr96ga0EVuASSIxhMolgYBBA7Y";
+
 export default function ChatAssistant({ insights, simulation }: ChatAssistantProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,6 +33,7 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
   const [initialized, setInitialized] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const conversationIdRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (open && !initialized) {
@@ -56,8 +59,19 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, isSuggested = false) => {
     if (!text.trim() || streaming) return;
+
+    const promptMessageId = crypto.randomUUID();
+    if (typeof window !== "undefined" && window.pendo?.trackAgent) {
+      window.pendo.trackAgent("prompt", {
+        agentId: PENDO_AGENT_ID,
+        conversationId: conversationIdRef.current,
+        messageId: promptMessageId,
+        content: text,
+        suggestedPrompt: isSuggested,
+      });
+    }
 
     const userMsg: Message = { role: "user", content: text };
     const newMessages = [...messages, userMsg];
@@ -67,6 +81,9 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
 
     // Add empty assistant message to stream into
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+    const responseMessageId = crypto.randomUUID();
+    let fullResponse = "";
 
     try {
       const res = await fetch("/api/chat", {
@@ -88,6 +105,7 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
+        fullResponse += chunk;
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
@@ -95,6 +113,16 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
             content: updated[updated.length - 1].content + chunk,
           };
           return updated;
+        });
+      }
+
+      if (typeof window !== "undefined" && window.pendo?.trackAgent) {
+        window.pendo.trackAgent("agent_response", {
+          agentId: PENDO_AGENT_ID,
+          conversationId: conversationIdRef.current,
+          messageId: responseMessageId,
+          content: fullResponse,
+          modelUsed: "gpt-oss-120b",
         });
       }
     } catch {
@@ -220,7 +248,7 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
                   {PROACTIVE_SUGGESTIONS.map((s) => (
                     <button
                       key={s}
-                      onClick={() => sendMessage(s)}
+                      onClick={() => sendMessage(s, true)}
                       className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full glass border border-violet-500/20 text-violet-400 hover:bg-violet-500/10 transition-colors whitespace-nowrap"
                     >
                       {s}
