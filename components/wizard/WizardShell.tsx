@@ -61,6 +61,21 @@ export default function WizardShell() {
   const handleBriefSubmit = async (briefData: LaunchBriefData) => {
     setLoading("Extracting insights...");
     setSession((s) => ({ ...s, briefData }));
+
+    const filledFields = [briefData.featureName, briefData.description, briefData.targetUsers, briefData.valueProposition, briefData.launchGoal, briefData.timeline, briefData.competitors, briefData.concerns].filter((v) => v.trim().length > 0).length;
+    window.pendo?.track("brief_submitted", {
+      inputMethod: "guided_form",
+      featureName: briefData.featureName,
+      filledFieldCount: filledFields,
+      hasDescription: briefData.description.trim().length > 0,
+      hasTargetUsers: briefData.targetUsers.trim().length > 0,
+      hasValueProposition: briefData.valueProposition.trim().length > 0,
+      hasLaunchGoal: briefData.launchGoal.trim().length > 0,
+      hasTimeline: briefData.timeline.trim().length > 0,
+      hasCompetitors: briefData.competitors.trim().length > 0,
+      hasConcerns: briefData.concerns.trim().length > 0,
+    });
+
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
@@ -69,6 +84,17 @@ export default function WizardShell() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      window.pendo?.track("insights_extracted", {
+        featureName: data.insights.featureName,
+        launchComplexity: data.insights.launchComplexity,
+        targetSegmentCount: data.insights.targetSegments?.length ?? 0,
+        differentiatorCount: data.insights.keyDifferentiators?.length ?? 0,
+        concernCount: data.insights.potentialConcerns?.length ?? 0,
+        inputMethod: "guided_form",
+        hasUploadedFile: false,
+      });
+
       setSession((s) => ({ ...s, insights: data.insights, isLoading: false, step: "review" }));
     } catch (err) {
       setError((err as Error).message || "Failed to extract insights");
@@ -78,6 +104,13 @@ export default function WizardShell() {
   const handleTextSubmit = async (text: string, fileName?: string) => {
     setLoading("Extracting insights...");
     setSession((s) => ({ ...s, rawInput: text, uploadedFileName: fileName }));
+
+    window.pendo?.track("brief_submitted", {
+      inputMethod: fileName ? "file_upload" : "paste",
+      uploadedFileName: fileName ?? "",
+      contentLength: text.length,
+    });
+
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
@@ -86,6 +119,17 @@ export default function WizardShell() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      window.pendo?.track("insights_extracted", {
+        featureName: data.insights.featureName,
+        launchComplexity: data.insights.launchComplexity,
+        targetSegmentCount: data.insights.targetSegments?.length ?? 0,
+        differentiatorCount: data.insights.keyDifferentiators?.length ?? 0,
+        concernCount: data.insights.potentialConcerns?.length ?? 0,
+        inputMethod: fileName ? "file_upload" : "paste",
+        hasUploadedFile: !!fileName,
+      });
+
       setSession((s) => ({ ...s, insights: data.insights, isLoading: false, step: "review" }));
     } catch (err) {
       setError((err as Error).message || "Failed to extract insights");
@@ -108,6 +152,25 @@ export default function WizardShell() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      window.pendo?.track("simulation_completed", {
+        featureName: session.insights!.featureName,
+        overallSentiment: data.simulation.overallSentiment,
+        sentimentLabel: data.simulation.sentimentLabel,
+        personaCount: data.simulation.personas?.length ?? 0,
+        topRisksCount: data.simulation.topRisks?.length ?? 0,
+        topOpportunitiesCount: data.simulation.topOpportunities?.length ?? 0,
+        trustLevel: session.personaSliders!.trustLevel,
+        urgency: session.personaSliders!.urgency,
+        priceSensitivity: session.personaSliders!.priceSensitivity,
+        switchingFriction: session.personaSliders!.switchingFriction,
+        noveltyAppetite: session.personaSliders!.noveltyAppetite,
+        adoptionReadiness: session.personaSliders!.adoptionReadiness,
+        marketMaturity: session.marketConditions!.marketMaturity,
+        competitionIntensity: session.marketConditions!.competitionIntensity,
+        economicClimate: session.marketConditions!.economicClimate,
+      });
+
       setSession((s) => ({ ...s, simulationResult: data.simulation, isLoading: false, step: "simulate" }));
     } catch (err) {
       setError((err as Error).message || "Simulation failed");
@@ -131,6 +194,19 @@ export default function WizardShell() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      window.pendo?.track("playbook_generated", {
+        featureName: session.insights!.featureName,
+        recommendedStyleName: data.playbook.recommendedStyle?.name ?? "",
+        recommendedStyleFit: data.playbook.recommendedStyle?.fit ?? "",
+        recommendedStyleFitScore: data.playbook.recommendedStyle?.fitScore ?? 0,
+        launchReadinessScore: data.playbook.launchReadinessScore,
+        phaseCount: data.playbook.phases?.length ?? 0,
+        alternativeStyleCount: data.playbook.allStyles?.length ?? 0,
+        overallSentiment: session.simulationResult!.overallSentiment,
+        launchComplexity: session.insights!.launchComplexity,
+      });
+
       setSession((s) => ({ ...s, playbook: data.playbook, isLoading: false, step: "playbook" }));
     } catch (err) {
       setError((err as Error).message || "Playbook generation failed");
@@ -138,6 +214,15 @@ export default function WizardShell() {
   };
 
   const handleRestart = () => {
+    window.pendo?.track("wizard_restarted", {
+      previousFeatureName: session.insights?.featureName ?? "",
+      completedStep: session.step,
+      hadSimulationResult: !!session.simulationResult,
+      hadPlaybook: !!session.playbook,
+      previousOverallSentiment: session.simulationResult?.overallSentiment ?? 0,
+      previousLaunchReadiness: session.playbook?.launchReadinessScore ?? 0,
+    });
+
     setSession({
       step: "ingest",
       activeScenario: "likely",
