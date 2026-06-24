@@ -89,7 +89,14 @@ function buildMarkdown(playbook: LaunchPlaybook, insights: ExtractedInsights): s
 export default function DownloadButton({ playbook, insights }: DownloadButtonProps) {
   const [open, setOpen] = useState(false);
 
-  const download = (content: string, fileName: string, mimeType: string) => {
+  const download = (content: string, fileName: string, mimeType: string, format: string) => {
+    window.pendo?.track("playbook_downloaded", {
+      downloadFormat: format,
+      featureName: insights.featureName,
+      launchReadinessScore: playbook.launchReadinessScore,
+      recommendedStyleName: playbook.recommendedStyle?.name ?? "",
+    });
+
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -117,7 +124,7 @@ export default function DownloadButton({ playbook, insights }: DownloadButtonPro
         <div className="absolute bottom-full mb-2 right-0 glass rounded-xl border border-[var(--glass-border)] overflow-hidden shadow-xl w-52 z-10">
           <button
             onClick={() =>
-              download(buildMarkdown(playbook, insights), `${slug}-playbook.md`, "text/markdown")
+              download(buildMarkdown(playbook, insights), `${slug}-playbook.md`, "text/markdown", "markdown")
             }
             className="w-full text-left px-4 py-3 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
           >
@@ -129,7 +136,8 @@ export default function DownloadButton({ playbook, insights }: DownloadButtonPro
               download(
                 JSON.stringify({ insights, playbook }, null, 2),
                 `${slug}-playbook.json`,
-                "application/json"
+                "application/json",
+                "json"
               )
             }
             className="w-full text-left px-4 py-3 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
@@ -138,7 +146,16 @@ export default function DownloadButton({ playbook, insights }: DownloadButtonPro
           </button>
           <div className="h-px bg-[var(--border)]" />
           <button
-            onClick={() => { window.print(); setOpen(false); }}
+            onClick={() => {
+              window.pendo?.track("playbook_downloaded", {
+                downloadFormat: "pdf",
+                featureName: insights.featureName,
+                launchReadinessScore: playbook.launchReadinessScore,
+                recommendedStyleName: playbook.recommendedStyle?.name ?? "",
+              });
+              window.print();
+              setOpen(false);
+            }}
             className="w-full text-left px-4 py-3 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
           >
             🖨️ Print / Save as PDF

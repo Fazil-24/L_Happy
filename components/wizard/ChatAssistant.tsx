@@ -59,6 +59,16 @@ export default function ChatAssistant({ insights, simulation }: ChatAssistantPro
   const sendMessage = async (text: string) => {
     if (!text.trim() || streaming) return;
 
+    const isSuggested = PROACTIVE_SUGGESTIONS.includes(text);
+    window.pendo?.track("chat_message_sent", {
+      featureName: insights.featureName,
+      messageLength: text.length,
+      messageCount: messages.filter((m) => m.role === "user").length + 1,
+      isSuggestedPrompt: isSuggested,
+      hasSimulationContext: !!simulation,
+      sourceStep: simulation ? "simulate" : "review",
+    });
+
     const userMsg: Message = { role: "user", content: text };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);

@@ -42,7 +42,15 @@ export default function IngestStep({ onBriefSubmit, onTextSubmit }: IngestStepPr
     if (ext === "txt" || ext === "md" || ext === "csv") {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setUploadedFile({ name: file.name, content: (e.target?.result as string) ?? "" });
+        const content = (e.target?.result as string) ?? "";
+        setUploadedFile({ name: file.name, content });
+        window.pendo?.track("file_uploaded", {
+          fileName: file.name,
+          fileExtension: ext ?? "",
+          fileSize: file.size,
+          parseMethod: "client",
+          extractedContentLength: content.length,
+        });
       };
       reader.readAsText(file);
       return;
@@ -59,6 +67,13 @@ export default function IngestStep({ onBriefSubmit, onTextSubmit }: IngestStepPr
         setParseError(data.error);
       } else {
         setUploadedFile({ name: data.fileName, content: data.text });
+        window.pendo?.track("file_uploaded", {
+          fileName: file.name,
+          fileExtension: ext ?? "",
+          fileSize: file.size,
+          parseMethod: "api",
+          extractedContentLength: (data.text as string)?.length ?? 0,
+        });
       }
     } catch {
       setParseError("Failed to parse file. Try pasting the content manually.");

@@ -17,6 +17,18 @@ const complexityColors: Record<string, string> = {
 };
 
 export default function ReviewStep({ insights, onConfirm, onBack }: ReviewStepProps) {
+  const handleConfirm = () => {
+    window.pendo?.track("insights_confirmed", {
+      featureName: insights.featureName,
+      launchComplexity: insights.launchComplexity,
+      targetSegmentCount: insights.targetSegments?.length ?? 0,
+      differentiatorCount: insights.keyDifferentiators?.length ?? 0,
+      concernCount: insights.potentialConcerns?.length ?? 0,
+      coreBenefit: insights.coreBenefit?.substring(0, 100) ?? "",
+    });
+    onConfirm();
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       <motion.div
@@ -155,7 +167,7 @@ export default function ReviewStep({ insights, onConfirm, onBack }: ReviewStepPr
             <RefreshCw className="w-4 h-4" />
             Re-enter brief
           </button>
-          <button onClick={onConfirm} className="btn-primary flex-1 justify-center py-3">
+          <button onClick={handleConfirm} className="btn-primary flex-1 justify-center py-3">
             Looks good — tune the market <ArrowRight className="w-5 h-5" />
           </button>
         </motion.div>
